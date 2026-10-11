@@ -6,7 +6,42 @@ export const pilotRules = {
   programs: ['Cybersecurity', 'Digital Engineering', 'Digital Management and Design', 'Statistics and Data Science', 'Applied Mathematics in the Digital Economy'],
   applicationStatuses: ['Sent', 'Viewed', 'Interview', 'Offer', 'Declined'], formats: ['office', 'hybrid', 'remote'],
 } as const;
-export const submissionSchema = z.object({ audience:z.enum(['student','company']), kind:z.enum(['signup','listing','call_request']), email:z.string().trim().toLowerCase().email().max(254), details:z.record(z.string().max(2000)).default({}) }).superRefine((data,ctx)=>{ if (data.audience==='student' && data.kind!=='signup') ctx.addIssue({code:'custom',message:'Invalid student request'}); if(data.audience==='company' && data.kind==='signup') ctx.addIssue({code:'custom',message:'Invalid company request'}); if(data.kind==='listing') for(const key of ['company','title','tasks','stack','contact','location','pay','format','slots']) { if(!data.details[key]?.trim()) ctx.addIssue({code:'custom',message:`Please complete ${key}`}); } if(data.kind==='listing' && (!Number.isInteger(Number(data.details['slots'])) || Number(data.details['slots'])<1)) ctx.addIssue({code:'custom',message:'At least one open slot is required'}); });
+export const submissionSchema = z
+  .object({
+    audience: z.enum(['student', 'company']),
+    kind: z.enum(['signup', 'listing', 'call_request']),
+    email: z.string().trim().toLowerCase().email().max(254),
+    details: z.record(z.string().max(2000)).default({}),
+  })
+  .superRefine((data, ctx) => {
+    if (data.audience === 'student' && data.kind !== 'signup')
+      ctx.addIssue({ code: 'custom', message: 'Invalid student request' });
+    if (data.audience === 'company' && data.kind === 'signup')
+      ctx.addIssue({ code: 'custom', message: 'Invalid company request' });
+
+    // ↓↓↓ НОВОЕ ↓↓↓
+    if (
+      data.audience === 'student' &&
+      data.kind === 'signup' &&
+      !data.email.endsWith('@narxoz.kz')
+    ) {
+      ctx.addIssue({
+        code: 'custom',
+        message: 'Please use your Narxoz email (@narxoz.kz)',
+        path: ['email'],
+      });
+    }
+    // ↑↑↑ НОВОЕ ↑↑↑
+
+    if (data.kind === 'listing')
+      for (const key of ['company', 'title', 'tasks', 'stack', 'contact', 'location', 'pay', 'format', 'slots']) {
+        if (!data.details[key]?.trim())
+          ctx.addIssue({ code: 'custom', message: `Please complete ${key}` });
+      }
+    if (data.kind === 'listing' &&
+        (!Number.isInteger(Number(data.details['slots'])) || Number(data.details['slots']) < 1))
+      ctx.addIssue({ code: 'custom', message: 'At least one open slot is required' });
+  });
 export const content = {
  student: {
   title:'One profile. Verified companies that actually take interns. Apply to several at once.',

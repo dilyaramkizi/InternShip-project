@@ -18,7 +18,20 @@ export function PilotForm({view,placement}:{view:View;placement:'hero'|'footer'}
  }
  function start(event:FormEvent<HTMLFormElement>){event.preventDefault();if(view==='student')void send('signup');else{track('listing_form_start',{view});setModal('listing');}}
  function submitDetails(event:FormEvent<HTMLFormElement>){event.preventDefault();const entries=new FormData(event.currentTarget);const details:Record<string,string>={};for(const [key,value]of entries){if(typeof value==='string')details[key]=value;} if(modal)void send(modal,details);}
- return <><form className="signup" onSubmit={start}><label className="sr-only" htmlFor={`email-${placement}`}>{view==='company'?'Work email':'Your email'}</label><Input id={`email-${placement}`} className="email-input" type="email" placeholder={view==='company'?'Your work email':'Your university email'} required maxLength={254} autoComplete="email" value={email} onChange={e=>{setEmail(e.target.value);setSuccess(false);setStatus('');}} disabled={busy}/><Button variant="notice" type="submit" disabled={busy} onClick={()=>track('cta_click',{cta_id:`${view}_${placement}`})}>{busy?<Loader2 className="animate-spin"/>:null}{copy.cta}<ArrowRight/></Button></form>
+ return <><form className="signup" onSubmit={start}><label className="sr-only" htmlFor={`email-${placement}`}>{view==='company'?'Work email':'Your email'}</label><Input
+  id={`email-${placement}`}
+  className="email-input"
+  type="email"
+  placeholder={view === 'company' ? 'Your work email' : 'Your university email'}
+  required
+  maxLength={254}
+  autoComplete="email"
+  pattern={view === 'student' ? '.+@narxoz\\.kz$' : undefined}
+  title={view === 'student' ? 'Use your Narxoz email (@narxoz.kz)' : undefined}
+  value={email}
+  onChange={...}
+  disabled={busy}
+/><Button variant="notice" type="submit" disabled={busy} onClick={()=>track('cta_click',{cta_id:`${view}_${placement}`})}>{busy?<Loader2 className="animate-spin"/>:null}{copy.cta}<ArrowRight/></Button></form>
  <p className="microcopy">{placement==='hero'?copy.micro:copy.secondMicro}</p>
  {view==='company'&&placement==='hero'&&<Button variant="ghost" className="h-auto p-0 font-mono text-xs underline underline-offset-4" onClick={()=>{setModal('call_request');setStatus('');}}>Or book a 15-min call <ArrowRight/></Button>}
  {status&&<p role={success?'status':'alert'} className={`form-status ${success?'success':''}`}>{success&&<CheckCircle2 className="inline mr-1" size={16}/>} {status}</p>}
