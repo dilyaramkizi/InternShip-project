@@ -29,7 +29,7 @@ export function PilotForm({view,placement}:{view:View;placement:'hero'|'footer'}
   pattern={view === 'student' ? '.+@narxoz\\.kz$' : undefined}
   title={view === 'student' ? 'Use your Narxoz email (@narxoz.kz)' : undefined}
   value={email}
-  onChange={...}
+onChange={e => { setEmail(e.target.value); setSuccess(false); setStatus(''); }}
   disabled={busy}
 /><Button variant="notice" type="submit" disabled={busy} onClick={()=>track('cta_click',{cta_id:`${view}_${placement}`})}>{busy?<Loader2 className="animate-spin"/>:null}{copy.cta}<ArrowRight/></Button></form>
  <p className="microcopy">{placement==='hero'?copy.micro:copy.secondMicro}</p>
