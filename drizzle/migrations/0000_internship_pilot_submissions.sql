@@ -1,0 +1,10 @@
+CREATE TABLE public.pilot_submissions (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), created_at timestamptz NOT NULL DEFAULT now(), audience text NOT NULL CHECK (audience IN ('student','company')), kind text NOT NULL CHECK (kind IN ('signup','listing','call_request')), email text NOT NULL CHECK (length(email) <= 254 AND email ~ '^[^[:space:]@]+@[^[:space:]@]+\.[^[:space:]@]+$'), details jsonb NOT NULL DEFAULT '{}'::jsonb CHECK (octet_length(details::text) < 12000));
+GRANT INSERT ON public.pilot_submissions TO anon, authenticated;
+GRANT ALL ON public.pilot_submissions TO service_role;
+ALTER TABLE public.pilot_submissions ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Visitors submit pilot interest only" ON public.pilot_submissions FOR INSERT TO anon, authenticated WITH CHECK ((audience = 'student' AND kind = 'signup') OR (audience = 'company' AND kind IN ('listing','call_request')));
+CREATE TABLE public.landing_events (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), created_at timestamptz NOT NULL DEFAULT now(), event text NOT NULL CHECK (event IN ('page_view','toggle_switch','cta_click','email_submit','listing_form_start','listing_form_submit','call_booked','faq_open','call_requested')), properties jsonb NOT NULL DEFAULT '{}'::jsonb CHECK (octet_length(properties::text) < 1000));
+GRANT INSERT ON public.landing_events TO anon, authenticated;
+GRANT ALL ON public.landing_events TO service_role;
+ALTER TABLE public.landing_events ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Visitors append anonymous events" ON public.landing_events FOR INSERT TO anon, authenticated WITH CHECK (true);

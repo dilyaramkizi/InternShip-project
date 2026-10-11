@@ -1,0 +1,59 @@
+# ===== Логи =====
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# ===== Зависимости и сборка =====
+node_modules
+dist
+dist-ssr
+.output
+.vinxi
+.tanstack/**
+.nitro
+.vite/
+*.tsbuildinfo
+
+# ===== Wrangler / Cloudflare =====
+.wrangler/
+.dev.vars
+
+# ===== Редакторы и ОС =====
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+.idea
+.DS_Store
+Thumbs.db
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# ===== Секреты и окружение =====
+.env
+.env.*
+!.env.example
+*.local
+
+# ===== Lovable =====
+.lovable/
+
+# ===== Supabase =====
+supabase/.temp/
+supabase/.branches/
+supabase/.env.local
+
+# ===== Bun =====
+.bun/
+
+# ===== Временные файлы =====
+null
+*.tmp
+*.temp
+.cache/

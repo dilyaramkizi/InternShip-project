@@ -1,0 +1,30 @@
+import {useState, type FormEvent} from 'react';
+import {useServerFn} from '@tanstack/react-start';
+import {ArrowRight, CheckCircle2, Loader2} from 'lucide-react';
+import {Button} from '@/components/ui/button';
+import {Input} from '@/components/ui/input';
+import {Dialog, DialogContent, DialogTitle, DialogDescription} from '@/components/ui/dialog';
+import {content, submissionSchema, type View} from '@/lib/internship-content';
+import {submitPilot} from '@/lib/pilot.functions';
+import {track} from '@/lib/landing-analytics';
+export function PilotForm({view,placement}:{view:View;placement:'hero'|'footer'}){
+ const copy=content[view]; const save=useServerFn(submitPilot);
+ const [email,setEmail]=useState('');const [modal,setModal]=useState<'listing'|'call_request'|null>(null);const [busy,setBusy]=useState(false);const [status,setStatus]=useState('');const [success,setSuccess]=useState(false);
+ async function send(kind:'signup'|'listing'|'call_request',details:Record<string,string>={}){
+  const parsed=submissionSchema.safeParse({email,audience:view,kind,details});
+  if(!parsed.success){setStatus(parsed.error.issues[0]?.message??'Please check your information.');return;}
+  setBusy(true);setStatus('');
+  try{const result=await save({data:parsed.data});if(!result.ok){setStatus(result.error??'Please try again.');return;}setSuccess(true);setModal(null);setStatus(kind==='signup'?'You’re on the pilot list! We’ll contact you when your profile is ready.':kind==='listing'?'Your listing was received. We’ll confirm it within 1 business day.':'Your call request was received. We’ll email you to arrange a time.');track(kind==='signup'?'email_submit':kind==='listing'?'listing_form_submit':'call_requested',{view});}catch{setStatus('We couldn’t save your request. Please try again.');}finally{setBusy(false);}
+ }
+ function start(event:FormEvent<HTMLFormElement>){event.preventDefault();if(view==='student')void send('signup');else{track('listing_form_start',{view});setModal('listing');}}
+ function submitDetails(event:FormEvent<HTMLFormElement>){event.preventDefault();const entries=new FormData(event.currentTarget);const details:Record<string,string>={};for(const [key,value]of entries){if(typeof value==='string')details[key]=value;} if(modal)void send(modal,details);}
+ return <><form className="signup" onSubmit={start}><label className="sr-only" htmlFor={`email-${placement}`}>{view==='company'?'Work email':'Your email'}</label><Input id={`email-${placement}`} className="email-input" type="email" placeholder={view==='company'?'Your work email':'Your university email'} required maxLength={254} autoComplete="email" value={email} onChange={e=>{setEmail(e.target.value);setSuccess(false);setStatus('');}} disabled={busy}/><Button variant="notice" type="submit" disabled={busy} onClick={()=>track('cta_click',{cta_id:`${view}_${placement}`})}>{busy?<Loader2 className="animate-spin"/>:null}{copy.cta}<ArrowRight/></Button></form>
+ <p className="microcopy">{placement==='hero'?copy.micro:copy.secondMicro}</p>
+ {view==='company'&&placement==='hero'&&<Button variant="ghost" className="h-auto p-0 font-mono text-xs underline underline-offset-4" onClick={()=>{setModal('call_request');setStatus('');}}>Or book a 15-min call <ArrowRight/></Button>}
+ {status&&<p role={success?'status':'alert'} className={`form-status ${success?'success':''}`}>{success&&<CheckCircle2 className="inline mr-1" size={16}/>} {status}</p>}
+ <Dialog open={modal!==null} onOpenChange={open=>{if(!open)setModal(null);}}><DialogContent className="notice-dialog"><DialogTitle className="font-display text-2xl">{modal==='listing'?'Put your internship on the board.':'Let’s talk interns.'}</DialogTitle><DialogDescription>{modal==='listing'?'Tell us about the task and your team. We verify every listing before it goes live.':'Request a 15-minute call. We’ll email you to agree on a time; no booking is confirmed yet.'}</DialogDescription><form className="listing-fields" onSubmit={submitDetails}><div><label className="field-label" htmlFor={`modal-email-${placement}`}>Work email</label><Input id={`modal-email-${placement}`} type="email" value={email} onChange={e=>setEmail(e.target.value)} required maxLength={254}/></div>
+ {modal==='listing'?<><Field name="company" label="Company name"/><Field name="title" label="Internship title"/><div><label className="field-label" htmlFor={`tasks-${placement}`}>Tasks & requirements</label><textarea id={`tasks-${placement}`} name="tasks" required maxLength={2000}/></div><Field name="stack" label="Tech stack"/><Field name="contact" label="Contact person"/><div className="grid grid-cols-2 gap-3"><Field name="location" label="Location"/><Field name="pay" label="Pay or unpaid"/></div><div className="grid grid-cols-2 gap-3"><div><label className="field-label" htmlFor={`format-${placement}`}>Format</label><select id={`format-${placement}`} name="format" defaultValue="hybrid"><option value="office">Office</option><option value="hybrid">Hybrid</option><option value="remote">Remote</option></select></div><Field name="slots" label="Open slots" type="number"/></div></>:<><Field name="company" label="Company name"/><Field name="contact" label="Your name"/><Field name="preferred_time" label="Preferred time (Almaty)"/></>}
+ <label className="text-xs leading-relaxed flex items-start gap-2"><input type="checkbox" required className="mt-1 shrink-0"/>I agree to be contacted about my {modal==='listing'?'internship listing':'call request'}. My email won’t be displayed publicly.</label>
+ {!success&&status&&<p role="alert" className="text-sm">{status}</p>}<Button variant="notice" type="submit" disabled={busy}>{busy?'Sending…':modal==='listing'?'Submit listing':'Request a 15-min call'}<ArrowRight/></Button></form></DialogContent></Dialog></>;
+ function Field({name,label,type='text'}:{name:string;label:string;type?:string}){return <div><label className="field-label" htmlFor={`${name}-${placement}`}>{label}</label><input id={`${name}-${placement}`} name={name} type={type} required min={type==='number'?1:undefined} step={type==='number'?1:undefined} maxLength={200} defaultValue={type==='number'?'1':undefined}/></div>}
+}
