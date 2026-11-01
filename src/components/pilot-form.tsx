@@ -63,40 +63,47 @@ export function PilotForm({view,placement}:{view:View;placement:'hero'|'footer'}
  return (
  <><form className="signup" onSubmit={start}>
    
-   {/* Добавили поле Name для студентов */}
-   {view === 'student' && (
-     <div className="mb-2 w-full">
-       <label className="sr-only" htmlFor={`name-${placement}`}>Your name</label>
+   {/* Обертка для полей ввода (Name и Email), чтобы они стояли друг под другом */}
+   <div className="flex flex-col gap-3 w-full mb-3">
+     
+     {view === 'student' && (
+       <div className="w-full">
+         <label className="sr-only" htmlFor={`name-${placement}`}>Your name</label>
+         <Input
+           id={`name-${placement}`}
+           type="text"
+           placeholder="Your name"
+           required
+           maxLength={100}
+           autoComplete="name"
+           value={name}
+           onChange={e => setName(e.target.value)}
+           disabled={busy}
+           className="w-full bg-white"
+         />
+       </div>
+     )}
+
+     <div className="w-full">
+       <label className="sr-only" htmlFor={`email-${placement}`}>{view==='company'?'Work email':'Your email'}</label>
        <Input
-         id={`name-${placement}`}
-         type="text"
-         placeholder="Your name"
-         required
-         maxLength={100}
-         autoComplete="name"
-         value={name}
-         onChange={e => setName(e.target.value)}
-         disabled={busy}
+        id={`email-${placement}`}
+        className="email-input w-full bg-white"
+        type="email"
+        placeholder={view === 'company' ? 'Your work email' : 'Your university email'}
+        required
+        maxLength={254}
+        autoComplete="email"
+        pattern={view === 'student' ? '.+@narxoz\\.kz$' : undefined}
+        title={view === 'student' ? 'Use your Narxoz email (@narxoz.kz)' : undefined}
+        value={email}
+        onChange={e => { setEmail(e.target.value); setSuccess(false); setStatus(''); }}
+        disabled={busy}
        />
      </div>
-   )}
+   </div>
 
-   <label className="sr-only" htmlFor={`email-${placement}`}>{view==='company'?'Work email':'Your email'}</label>
-   <Input
-    id={`email-${placement}`}
-    className="email-input"
-    type="email"
-    placeholder={view === 'company' ? 'Your work email' : 'Your university email'}
-    required
-    maxLength={254}
-    autoComplete="email"
-    pattern={view === 'student' ? '.+@narxoz\\.kz$' : undefined}
-    title={view === 'student' ? 'Use your Narxoz email (@narxoz.kz)' : undefined}
-    value={email}
-    onChange={e => { setEmail(e.target.value); setSuccess(false); setStatus(''); }}
-    disabled={busy}
-   />
-   <Button variant="notice" type="submit" disabled={busy} onClick={()=>{
+   <Button variant="notice" type="submit" disabled={busy} className="w-full" onClick={()=>{
      track('cta_click',{cta_id:`${view}_${placement}`});
      // GA4 tracking - cta_click
      if (typeof window !== 'undefined' && (window as any).gtag) {
