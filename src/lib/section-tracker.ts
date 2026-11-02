@@ -1,3 +1,5 @@
+import { track } from '@/lib/landing-analytics';
+
 type Gtag = (command: 'event', name: string, params: Record<string, string>) => void;
 
 // A section counts as viewed when 30% of it is visible, or when it fills half the
@@ -27,6 +29,7 @@ export function trackSectionVisibility(view: string): () => void {
 
         sent.add(name);
         observer.unobserve(entry.target);
+        track('section_view', { section_name: name, view });
         (window as Window & { gtag?: Gtag }).gtag?.('event', 'section_view', { section_name: name, view });
       }
     },
