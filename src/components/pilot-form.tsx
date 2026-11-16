@@ -4,12 +4,13 @@ import {ArrowRight, CheckCircle2, Loader2} from 'lucide-react';
 import {Button} from '@/components/ui/button';
 import {Input} from '@/components/ui/input';
 import {Dialog, DialogContent, DialogTitle, DialogDescription} from '@/components/ui/dialog';
-import {content, submissionSchema, type View} from '@/lib/internship-content';
+import {contentFor, submissionSchema, type View} from '@/lib/internship-content';
+import {useLang, useT} from '@/lib/i18n';
 import {submitPilot} from '@/lib/pilot.functions';
 import {track} from '@/lib/landing-analytics';
 
 export function PilotForm({view,placement}:{view:View;placement:'hero'|'footer'}){
- const copy=content[view]; const save=useServerFn(submitPilot);
+ const lang=useLang(); const t=useT(); const f=t.pilotForm; const copy=contentFor(lang)[view]; const save=useServerFn(submitPilot);
  
  // Добавили состояние для имени
  const [name, setName] = useState('');
@@ -20,15 +21,15 @@ export function PilotForm({view,placement}:{view:View;placement:'hero'|'footer'}
   const payloadDetails = kind === 'signup' ? { ...details, full_name: name } : details;
   
   const parsed=submissionSchema.safeParse({email,audience:view,kind,details: payloadDetails});
-  if(!parsed.success){setStatus(parsed.error.issues[0]?.message??'Please check your information.');return;}
+  if(!parsed.success){setStatus(parsed.error.issues[0]?.path[0]==='email'&&lang==='ru'?f.narxozTitle:parsed.error.issues[0]?.message??f.checkInfo);return;}
   setBusy(true);setStatus('');
   try{
     const result=await save({data:parsed.data});
-    if(!result.ok){setStatus(result.error??'Please try again.');return;}
+    if(!result.ok){setStatus(lang==='ru'?f.saveFailed:result.error??f.tryAgain);return;}
     
     setSuccess(true);
     setModal(null);
-    setStatus(kind==='signup'?'You’re on the pilot list! We’ll contact you when your profile is ready.':kind==='listing'?'Your listing was received. We’ll confirm it within 1 business day.':'Your call request was received. We’ll email you to arrange a time.');
+    setStatus(kind==='signup'?f.signupOk:kind==='listing'?f.listingOk:f.callOk);
     
     // Supabase tracking
     track(kind==='signup'?'email_submit':kind==='listing'?'listing_form_submit':'call_requested',{view});
@@ -38,7 +39,7 @@ export function PilotForm({view,placement}:{view:View;placement:'hero'|'footer'}
       (window as any).gtag('event', 'sign_up', { method: 'email', audience: view });
     }
   }catch{
-    setStatus('We couldn’t save your request. Please try again.');
+    setStatus(f.saveFailed);
   }finally{
     setBusy(false);
   }
@@ -68,11 +69,11 @@ export function PilotForm({view,placement}:{view:View;placement:'hero'|'footer'}
      
      {view === 'student' && (
        <div className="w-full">
-         <label className="sr-only" htmlFor={`name-${placement}`}>Your name</label>
+         <label className="sr-only" htmlFor={`name-${placement}`}>{f.name}</label>
          <Input
            id={`name-${placement}`}
            type="text"
-           placeholder="Your name"
+           placeholder={f.name}
            required
            maxLength={100}
            autoComplete="name"
@@ -85,17 +86,17 @@ export function PilotForm({view,placement}:{view:View;placement:'hero'|'footer'}
      )}
 
      <div className="w-full">
-       <label className="sr-only" htmlFor={`email-${placement}`}>{view==='company'?'Work email':'Your email'}</label>
+       <label className="sr-only" htmlFor={`email-${placement}`}>{view==='company'?f.workEmail:f.yourEmail}</label>
        <Input
         id={`email-${placement}`}
         className="email-input w-full bg-white"
         type="email"
-        placeholder={view === 'company' ? 'Your work email' : 'Your university email'}
+        placeholder={view === 'company' ? f.workEmailPh : f.uniEmailPh}
         required
         maxLength={254}
         autoComplete="email"
         pattern={view === 'student' ? '.+@narxoz\\.kz$' : undefined}
-        title={view === 'student' ? 'Use your Narxoz email (@narxoz.kz)' : undefined}
+        title={view === 'student' ? f.narxozTitle : undefined}
         value={email}
         onChange={e => { setEmail(e.target.value); setSuccess(false); setStatus(''); }}
         disabled={busy}
@@ -115,13 +116,13 @@ export function PilotForm({view,placement}:{view:View;placement:'hero'|'footer'}
  </form>
  
  <p className="microcopy">{placement==='hero'?copy.micro:copy.secondMicro}</p>
- {view==='company'&&placement==='hero'&&<Button variant="ghost" className="h-auto p-0 font-mono text-xs underline underline-offset-4" onClick={()=>{setModal('call_request');setStatus('');}}>Or book a 15-min call <ArrowRight/></Button>}
+ {view==='company'&&placement==='hero'&&<Button variant="ghost" className="h-auto p-0 font-mono text-xs underline underline-offset-4" onClick={()=>{setModal('call_request');setStatus('');}}>{f.bookCall} <ArrowRight/></Button>}
  {status&&<p role={success?'status':'alert'} className={`form-status ${success?'success':''}`}>{success&&<CheckCircle2 className="inline mr-1" size={16}/>} {status}</p>}
  
- <Dialog open={modal!==null} onOpenChange={open=>{if(!open)setModal(null);}}><DialogContent className="notice-dialog"><DialogTitle className="font-display text-2xl">{modal==='listing'?'Put your internship on the board.':'Let’s talk interns.'}</DialogTitle><DialogDescription>{modal==='listing'?'Tell us about the task and your team. We verify every listing before it goes live.':'Request a 15-minute call. We’ll email you to agree on a time; no booking is confirmed yet.'}</DialogDescription><form className="listing-fields" onSubmit={submitDetails}><div><label className="field-label" htmlFor={`modal-email-${placement}`}>Work email</label><Input id={`modal-email-${placement}`} type="email" value={email} onChange={e=>setEmail(e.target.value)} required maxLength={254}/></div>
- {modal==='listing'?<><Field name="company" label="Company name"/><Field name="title" label="Internship title"/><div><label className="field-label" htmlFor={`tasks-${placement}`}>Tasks & requirements</label><textarea id={`tasks-${placement}`} name="tasks" required maxLength={2000}/></div><Field name="stack" label="Tech stack"/><Field name="contact" label="Contact person"/><div className="grid grid-cols-2 gap-3"><Field name="location" label="Location"/><Field name="pay" label="Pay or unpaid"/></div><div className="grid grid-cols-2 gap-3"><div><label className="field-label" htmlFor={`format-${placement}`}>Format</label><select id={`format-${placement}`} name="format" defaultValue="hybrid"><option value="office">Office</option><option value="hybrid">Hybrid</option><option value="remote">Remote</option></select></div><Field name="slots" label="Open slots" type="number"/></div></>:<><Field name="company" label="Company name"/><Field name="contact" label="Your name"/><Field name="preferred_time" label="Preferred time (Almaty)"/></>}
- <label className="text-xs leading-relaxed flex items-start gap-2"><input type="checkbox" required className="mt-1 shrink-0"/>I agree to be contacted about my {modal==='listing'?'internship listing':'call request'}. My email won’t be displayed publicly.</label>
- {!success&&status&&<p role="alert" className="text-sm">{status}</p>}<Button variant="notice" type="submit" disabled={busy}>{busy?'Sending…':modal==='listing'?'Submit listing':'Request a 15-min call'}<ArrowRight/></Button></form></DialogContent></Dialog></>);
+ <Dialog open={modal!==null} onOpenChange={open=>{if(!open)setModal(null);}}><DialogContent className="notice-dialog"><DialogTitle className="font-display text-2xl">{modal==='listing'?f.listingTitle:f.callTitle}</DialogTitle><DialogDescription>{modal==='listing'?f.listingDesc:f.callDesc}</DialogDescription><form className="listing-fields" onSubmit={submitDetails}><div><label className="field-label" htmlFor={`modal-email-${placement}`}>{f.workEmail}</label><Input id={`modal-email-${placement}`} type="email" value={email} onChange={e=>setEmail(e.target.value)} required maxLength={254}/></div>
+ {modal==='listing'?<><Field name="company" label={f.companyName}/><Field name="title" label={f.internshipTitle}/><div><label className="field-label" htmlFor={`tasks-${placement}`}>{f.tasks}</label><textarea id={`tasks-${placement}`} name="tasks" required maxLength={2000}/></div><Field name="stack" label={f.stack}/><Field name="contact" label={f.contact}/><div className="grid grid-cols-2 gap-3"><Field name="location" label={f.location}/><Field name="pay" label={f.pay}/></div><div className="grid grid-cols-2 gap-3"><div><label className="field-label" htmlFor={`format-${placement}`}>{f.format}</label><select id={`format-${placement}`} name="format" defaultValue="hybrid"><option value="office">{t.format["office"]}</option><option value="hybrid">{t.format["hybrid"]}</option><option value="remote">{t.format["remote"]}</option></select></div><Field name="slots" label={f.slots} type="number"/></div></>:<><Field name="company" label={f.companyName}/><Field name="contact" label={f.yourName}/><Field name="preferred_time" label={f.preferredTime}/></>}
+ <label className="text-xs leading-relaxed flex items-start gap-2"><input type="checkbox" required className="mt-1 shrink-0"/>{modal==='listing'?f.consentListing:f.consentCall}</label>
+ {!success&&status&&<p role="alert" className="text-sm">{status}</p>}<Button variant="notice" type="submit" disabled={busy}>{busy?f.sending:modal==='listing'?f.submitListing:f.requestCall}<ArrowRight/></Button></form></DialogContent></Dialog></>);
  
  function Field({name,label,type='text'}:{name:string;label:string;type?:string}){return <div><label className="field-label" htmlFor={`${name}-${placement}`}>{label}</label><input id={`${name}-${placement}`} name={name} type={type} required min={type==='number'?1:undefined} step={type==='number'?1:undefined} maxLength={200} defaultValue={type==='number'?'1':undefined}/></div>}
 }

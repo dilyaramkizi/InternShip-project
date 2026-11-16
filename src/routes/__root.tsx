@@ -7,12 +7,15 @@ import {
   useRouter,
   HeadContent,
   Scripts,
+  retainSearchParams,
+  useRouterState,
   type ErrorComponentProps,
 } from "@tanstack/react-router";
 import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
+import { parseLang, type Lang } from "../lib/i18n";
 
 function NotFoundComponent() {
   return (
@@ -76,6 +79,10 @@ function ErrorComponent({ error, reset }: ErrorComponentProps) {
 }
 
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
+  // ?lang=ru switches every page to Russian; English is the default and needs no param.
+  validateSearch: (search: Record<string, unknown>): { lang?: Lang } =>
+    search["lang"] === "ru" || search["lang"] === "en" ? { lang: parseLang(search["lang"]) } : {},
+  search: { middlewares: [retainSearchParams(["lang"])] },
   head: () => ({
     meta: [
       { charSet: "utf-8" },
@@ -105,8 +112,11 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 });
 
 function RootShell({ children }: { children: ReactNode }) {
+  const lang = useRouterState({
+    select: (s) => parseLang((s.location.search as { lang?: unknown }).lang),
+  });
   return (
-    <html lang="en">
+    <html lang={lang}>
       <head>
         <HeadContent />
         

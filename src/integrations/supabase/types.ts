@@ -14,6 +14,142 @@ export type Database = {
   }
   public: {
     Tables: {
+      applications: {
+        Row: {
+          created_at: string
+          id: string
+          internship_id: string
+          status: string
+          student_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          internship_id: string
+          status?: string
+          student_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          internship_id?: string
+          status?: string
+          student_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "applications_internship_id_fkey"
+            columns: ["internship_id"]
+            isOneToOne: false
+            referencedRelation: "internships"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      companies: {
+        Row: {
+          city: string
+          created_at: string
+          description: string
+          id: string
+          name: string
+          owner_id: string | null
+          verified: boolean
+          website: string
+        }
+        Insert: {
+          city?: string
+          created_at?: string
+          description?: string
+          id?: string
+          name: string
+          owner_id?: string | null
+          verified?: boolean
+          website?: string
+        }
+        Update: {
+          city?: string
+          created_at?: string
+          description?: string
+          id?: string
+          name?: string
+          owner_id?: string | null
+          verified?: boolean
+          website?: string
+        }
+        Relationships: []
+      }
+      internships: {
+        Row: {
+          company_id: string
+          contact: string
+          created_at: string
+          deadline: string | null
+          department: string
+          description: string
+          duration: string
+          format: string
+          id: string
+          is_open: boolean
+          location: string
+          paperwork: boolean
+          pay: string
+          requirements: string
+          slots: number
+          stack: string
+          tasks: string
+          title: string
+        }
+        Insert: {
+          company_id: string
+          contact?: string
+          created_at?: string
+          deadline?: string | null
+          department?: string
+          description?: string
+          duration?: string
+          format?: string
+          id?: string
+          is_open?: boolean
+          location?: string
+          paperwork?: boolean
+          pay?: string
+          requirements?: string
+          slots?: number
+          stack?: string
+          tasks?: string
+          title: string
+        }
+        Update: {
+          company_id?: string
+          contact?: string
+          created_at?: string
+          deadline?: string | null
+          department?: string
+          description?: string
+          duration?: string
+          format?: string
+          id?: string
+          is_open?: boolean
+          location?: string
+          paperwork?: boolean
+          pay?: string
+          requirements?: string
+          slots?: number
+          stack?: string
+          tasks?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "internships_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       landing_events: {
         Row: {
           created_at: string
@@ -62,12 +198,98 @@ export type Database = {
         }
         Relationships: []
       }
+      profiles: {
+        Row: {
+          created_at: string
+          email: string
+          full_name: string
+          id: string
+          is_pilot: boolean
+          role: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          full_name?: string
+          id: string
+          is_pilot?: boolean
+          role: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          full_name?: string
+          id?: string
+          is_pilot?: boolean
+          role?: string
+        }
+        Relationships: []
+      }
+      student_cvs: {
+        Row: {
+          education: string
+          experience: string
+          full_name: string
+          gpa: number | null
+          headline: string
+          languages: string
+          links: string
+          phone: string
+          program: string
+          projects: string
+          skills: string
+          summary: string
+          telegram: string
+          updated_at: string
+          user_id: string
+          year: number | null
+        }
+        Insert: {
+          education?: string
+          experience?: string
+          full_name?: string
+          gpa?: number | null
+          headline?: string
+          languages?: string
+          links?: string
+          phone?: string
+          program?: string
+          projects?: string
+          skills?: string
+          summary?: string
+          telegram?: string
+          updated_at?: string
+          user_id: string
+          year?: number | null
+        }
+        Update: {
+          education?: string
+          experience?: string
+          full_name?: string
+          gpa?: number | null
+          headline?: string
+          languages?: string
+          links?: string
+          phone?: string
+          program?: string
+          projects?: string
+          skills?: string
+          summary?: string
+          telegram?: string
+          updated_at?: string
+          user_id?: string
+          year?: number | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      is_company_member: { Args: { cid: string }; Returns: boolean }
+      my_company_id: { Args: never; Returns: string | null }
+      my_role: { Args: never; Returns: string | null }
     }
     Enums: {
       [_ in never]: never
