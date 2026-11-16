@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { Link, useNavigate } from "@tanstack/react-router";
+import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { ArrowRight, GraduationCap, Languages, LogOut } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useLang, useSetLang, useT } from "@/lib/i18n";
@@ -27,6 +27,33 @@ export function LangSwitch() {
   );
 }
 
+const studentTabs = ["companies", "applications", "cv"] as const;
+
+// Students navigate their dashboard from the header: catalogue, applications, CV.
+function StudentLinks() {
+  const t = useT();
+  const location = useRouterState({ select: (s) => s.location });
+  const current =
+    location.pathname === "/student"
+      ? ((location.search as { tab?: string }).tab ?? "companies")
+      : null;
+  return (
+    <>
+      {studentTabs.map((tab) => (
+        <Link
+          key={tab}
+          to="/student"
+          search={tab === "companies" ? {} : { tab }}
+          className="header-link"
+          aria-current={current === tab ? "page" : undefined}
+        >
+          {t.student.tabs[tab]}
+        </Link>
+      ))}
+    </>
+  );
+}
+
 function AccountLinks() {
   const t = useT();
   const { loading, session, profile } = useAuth();
@@ -40,9 +67,13 @@ function AccountLinks() {
     );
   return (
     <>
-      <Link to={dashboardPath(profile.role)} className="header-link">
-        {t.nav.dashboard}
-      </Link>
+      {profile.role === "student" ? (
+        <StudentLinks />
+      ) : (
+        <Link to={dashboardPath(profile.role)} className="header-link">
+          {t.nav.dashboard}
+        </Link>
+      )}
       <button
         type="button"
         className="header-link icon-only"

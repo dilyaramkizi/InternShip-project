@@ -197,6 +197,7 @@ function CompanyForm({
       description: String(form.get("description") ?? "").trim(),
       website: String(form.get("website") ?? "").trim(),
       city: String(form.get("city") ?? "").trim() || "Almaty",
+      logo_url: String(form.get("logo_url") ?? "").trim(),
     };
     if (!values.name) return setError(c.name);
     setBusy(true);
@@ -252,6 +253,20 @@ function CompanyForm({
           </label>
           <Input id="co-city" name="city" maxLength={80} defaultValue={company?.city ?? "Almaty"} />
         </div>
+      </div>
+      <div>
+        <label className="field-label" htmlFor="co-logo">
+          {c.logoUrl}
+        </label>
+        <Input
+          id="co-logo"
+          name="logo_url"
+          type="url"
+          pattern="https://.*"
+          maxLength={500}
+          defaultValue={company?.logo_url}
+          placeholder="https://"
+        />
       </div>
       {error && (
         <p role="alert" className="form-status auth-error">
@@ -332,7 +347,8 @@ function Positions({
               {i.is_open ? c.open : c.closed}
             </span>
             <span className="label">
-              {t.format[i.format]} · {t.preview.slot(i.slots)}
+              {i.format ? t.format[i.format] : c.form.notSpecified}
+              {i.slots != null && ` · ${t.preview.slot(i.slots)}`}
             </span>
           </div>
           <h2>{i.title}</h2>
@@ -415,10 +431,14 @@ function InternshipForm({
       tasks: get("tasks"),
       requirements: get("requirements"),
       stack: get("stack"),
-      format: pilotRules.formats.includes(get("format") as never) ? get("format") : "office",
+      format: pilotRules.formats.includes(get("format") as never) ? get("format") : null,
       location: get("location") || "Almaty",
       pay: get("pay"),
-      slots: Math.max(1, Math.min(100, Math.floor(Number(get("slots")) || 1))),
+      slots: get("slots")
+        ? Math.max(1, Math.min(100, Math.floor(Number(get("slots")) || 1)))
+        : null,
+      benefits: get("benefits"),
+      contact_email: get("contact_email"),
       duration: get("duration"),
       deadline: get("deadline") || null,
       contact: get("contact"),
@@ -431,7 +451,7 @@ function InternshipForm({
       : await supabase.from("internships").insert(values);
     setBusy(false);
     if (err) return setError(t.auth.genericError);
-    if (!initial) track("internship_created", { format: values.format ?? "office" });
+    if (!initial) track("internship_created", { format: values.format ?? "unspecified" });
     onDone();
   }
 
@@ -453,19 +473,11 @@ function InternshipForm({
         min={opts.type === "number" ? 1 : undefined}
         max={opts.type === "number" ? 100 : undefined}
         required={opts.required}
-        defaultValue={
-          initial
-            ? String(initial[name] ?? "")
-            : name === "slots"
-              ? "1"
-              : name === "location"
-                ? "Almaty"
-                : ""
-        }
+        defaultValue={initial ? String(initial[name] ?? "") : name === "location" ? "Almaty" : ""}
       />
     </div>
   );
-  const area = (name: keyof Internship, label: string, rows = 3) => (
+  const area = (name: keyof Internship, label: string, rows = 3, max = 4000) => (
     <div>
       <label className="field-label" htmlFor={`in-${name}`}>
         {label}
@@ -474,7 +486,7 @@ function InternshipForm({
         id={`in-${name}`}
         name={name}
         rows={rows}
-        maxLength={4000}
+        maxLength={max}
         defaultValue={initial ? String(initial[name] ?? "") : ""}
       />
     </div>
@@ -485,8 +497,12 @@ function InternshipForm({
       {field("title", f.title, { required: true })}
       {field("department", f.department)}
       {area("description", f.description, 4)}
-      {area("tasks", f.tasks)}
+      <div>
+        {area("tasks", f.tasks)}
+        <p className="microcopy">{f.tasksHint}</p>
+      </div>
       {area("requirements", f.requirements)}
+      {area("benefits", f.benefits)}
       <div>
         {field("stack", f.stack, { placeholder: "SQL, Python, Spark", max: 400 })}
         <p className="microcopy">{f.stackHint}</p>
@@ -496,7 +512,12 @@ function InternshipForm({
           <label className="field-label" htmlFor="in-format">
             {f.format}
           </label>
-          <select id="in-format" name="format" defaultValue={initial?.format ?? "hybrid"}>
+          <select
+            id="in-format"
+            name="format"
+            defaultValue={initial ? (initial.format ?? "") : "hybrid"}
+          >
+            <option value="">{f.notSpecified}</option>
             {pilotRules.formats.map((fm) => (
               <option key={fm} value={fm}>
                 {t.format[fm]}
@@ -504,7 +525,10 @@ function InternshipForm({
             ))}
           </select>
         </div>
-        {field("slots", f.slots, { type: "number" })}
+        <div>
+          {field("slots", f.slots, { type: "number" })}
+          <p className="microcopy">{f.slotsHint}</p>
+        </div>
       </div>
       <div className="grid grid-cols-2 gap-3">
         {field("location", f.location)}
@@ -514,7 +538,11 @@ function InternshipForm({
         {field("duration", f.duration, { placeholder: f.durationPh, max: 120 })}
         {field("deadline", f.deadline, { type: "date" })}
       </div>
-      {field("contact", f.contact, { max: 200 })}
+      <div>
+        {area("contact", f.contact, 3, 200)}
+        <p className="microcopy">{f.contactHint}</p>
+      </div>
+      {field("contact_email", f.contactEmail, { type: "email" })}
       <label className="text-sm flex items-start gap-2">
         <input
           type="checkbox"

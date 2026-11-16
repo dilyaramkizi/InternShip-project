@@ -52,6 +52,7 @@ export type Database = {
           created_at: string
           description: string
           id: string
+          logo_url: string
           name: string
           owner_id: string | null
           verified: boolean
@@ -62,6 +63,7 @@ export type Database = {
           created_at?: string
           description?: string
           id?: string
+          logo_url?: string
           name: string
           owner_id?: string | null
           verified?: boolean
@@ -72,6 +74,7 @@ export type Database = {
           created_at?: string
           description?: string
           id?: string
+          logo_url?: string
           name?: string
           owner_id?: string | null
           verified?: boolean
@@ -81,61 +84,67 @@ export type Database = {
       }
       internships: {
         Row: {
+          benefits: string
           company_id: string
           contact: string
+          contact_email: string
           created_at: string
           deadline: string | null
           department: string
           description: string
           duration: string
-          format: string
+          format: string | null
           id: string
           is_open: boolean
           location: string
           paperwork: boolean
           pay: string
           requirements: string
-          slots: number
+          slots: number | null
           stack: string
           tasks: string
           title: string
         }
         Insert: {
+          benefits?: string
           company_id: string
           contact?: string
+          contact_email?: string
           created_at?: string
           deadline?: string | null
           department?: string
           description?: string
           duration?: string
-          format?: string
+          format?: string | null
           id?: string
           is_open?: boolean
           location?: string
           paperwork?: boolean
           pay?: string
           requirements?: string
-          slots?: number
+          slots?: number | null
           stack?: string
           tasks?: string
           title: string
         }
         Update: {
+          benefits?: string
           company_id?: string
           contact?: string
+          contact_email?: string
           created_at?: string
           deadline?: string | null
           department?: string
           description?: string
           duration?: string
-          format?: string
+          format?: string | null
           id?: string
           is_open?: boolean
           location?: string
           paperwork?: boolean
           pay?: string
           requirements?: string
-          slots?: number
+          slots?: number | null
           stack?: string
           tasks?: string
           title?: string
